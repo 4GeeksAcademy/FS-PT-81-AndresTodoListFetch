@@ -5,7 +5,7 @@ function Home() {
 	const [work, setWork] = useState('');
 	const [tarea, setTarea] = useState([]);
 	const [username, setUsername] = useState('andrew27');
-	const [userData, setUserData] = useState();
+	const [userData, setUserData] = useState([]);
 	const url = 'https://playground.4geeks.com/todo';
 
 	//GET//
@@ -16,27 +16,39 @@ function Home() {
 			if (resp.status == 404) return createUser('something went wrong')
 			if (!resp.ok) throw new Error('something went wrong')
 			const data = await resp.json();
-			setUserData(data)
+			setUserData(data.todos)
 		} catch (error) {
 			console.error(error)
-
 		}
 
 	}
-
-
-	const handleSubmit = e => {
-		e.preventDefault();
-	}
-
 
 	//POST//
 
 	const handleKeyDown = async e => {
 		if (e.key === "Enter") {
-			setTarea([...tarea, work]);
+		createTarea(work)
 			setWork("");
 		};
+	}
+	const createTarea = async (tarea) => {
+		try {
+			const data = await fetch(url + '/todos/' + username, {
+				method: "POST",
+				headers: {
+					'content-type': 'application/json'
+				},
+				body: JSON.stringify({
+					label: tarea,
+					is_done: false
+				})
+			});
+			if (!data.ok) throw new Error('something went wrong creating the task');
+			getDataAsync();
+		} catch (error) {
+			console.error(error);
+		}
+	}
 
 		//POST//
 
@@ -61,7 +73,7 @@ function Home() {
 				const resp = await fetch(url + '/todos/' + todo_id, {
 					method: 'DELETE',
 				});
-				if (!resp, ok)
+				if (!resp.ok)
 					throw new Error("Something went wrong with username");
 				getDataAsync();
 			} catch (error) {
@@ -82,10 +94,10 @@ function Home() {
 						<h1>TODO LIST</h1>
 						<input type="text" onChange={HandleChange} onKeyDown={(e) => handleKeyDown(e)} value={work} />
 						<ul>
-							{tarea.map((item, index) => (
+							{userData?.map((item, index) => (
 								<div className="items" key={index}>
-									<li>{item}</li>
-									<button onClick={() => { handleDelete(index); }}>X</button>
+									<li>{item.label}</li>
+									<button onClick={() => { handleDelete(item.id); }}>X</button>
 								</div>))}
 						</ul>
 						<p className="item">{tarea.length} {tarea.length === 1 ? "item" : "items"}</p>
@@ -93,7 +105,5 @@ function Home() {
 				</div>
 			</div>
 		);
-
 	 }
-	}
 export default Home;
